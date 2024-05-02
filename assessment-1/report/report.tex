@@ -11,6 +11,11 @@
 \usepackage{booktabs}
 \usepackage{numprint}
 \usepackage[flushleft]{threeparttable}
+\graphicspath{{./figures/}}
+\usepackage{array}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
 
 \begin{document}
 
@@ -26,10 +31,7 @@
 \maketitle
 
 \begin{abstract}
-    Medical datasets were modelled by Bayesian Networks and Gaussian Processes.
-    The techniques used in each approach is detailed in this report.
-    The performance of each approach is evaluated using standardized metrics on a test data set.
-    Their merits and suitability are discussed respectively.
+
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -38,8 +40,107 @@
 
 \section{Introduction}
 
+When interacting with the real world, robots usually follow a observation-decision-action cycle. They observe the environment, make decisions based on the observations, and then act on the environment. The state of the robot and the environment depends on all the previous actions of the robot, and any action taken will affect the probability distribution of future states. This class of problem is known as Sequential Decision Problems (SDPs). Markov Decision Processes (MDPs) \cite{putermanMarkovDecisionProcesses2014} are often used to describe such problems. MPDs assumes fully accurate observations of the environment but actions have non-deterministic outcomes.
 
-whats going on? \cite{noauthor_probabilistic_nodate}
+Reinforcement Learning (RL) is a subfield of machine learning that deals with sequential decision problems. The algorithm learns an optimal control policy by interacting with the environment. The agent receives rewards from the environment as feedback for its actions. The goal of the agent is to maximize the cumulative reward over time.
+
+Robot navigation problems is a typical example of SDPs and are often modelled using MDPs. It has been demonstrated that RL algorithms solves navigation problems effectively \cite{zhuDeepReinforcementLearning2021}. There is usually a reward associated with reaching the navigation goal. An RL algorithm can autonomously explore the state/action space of the environment and learn an optimal policy to reach the goal.
+
+A main weakness of this approach is that the reward is sparse. Only the goal state has a non-zero reward. At the beginning of learning, the agent spend a lot of time wondering aimlessly in the environment without receiving any reward. A human processes domain knowledge about the environment such as where the goal is and where the obstacles to avoid. By interacting with a human teacher in the learning process, the human can use some of the domain knowledge to guide the learning of the agent to speed up the learning process.
+
+In this report, we use a simple grid world with a single goal state to explore the effect of human guidance in the Reinforcement Learning process. We compare the performance of the agent with and without human guidance as well as different granularity of feedback.
+
+\section{Related Work}
+
+Corrective feedback is understood to be an important part of learning. \cite{ellisIMPLICITEXPLICITCORRECTIVE2006} examined the effect of corrective feedback on language learning. It tested 2 types of feedback, implicit and explicit. Implicit feedback provide only a good/bad response to error. Explicit feedback, on the other hand, provide detailed explanation relating to the error itself. The study found that explicit feedback showed a clear advantage over implicit feedback.
+
+Human feedback has been widely used in Reinforcement Learning \cite{liHumanCenteredReinforcementLearning2019} to improve learning outcomes. \cite{iidaGeneratingPersonalityCharacter1998} showed that by tweaking reward according to human feedback, a Q learning algorithm is able to generate personalized control policy for a robotic face. \cite{tenorio-gonzalezDynamicRewardShaping2010} showed that even inconstant feedback improves learning outcomes.
+
+Human feedback is equally applicable in deep reinforcement learning tasks where the state and observation space is large and complex. \cite{j.wuHumanGuidedReinforcementLearning2023} shows that human interventions in an autonomous vehicle can serve as a reward shaping mechanism to improve the performance of the agent. \cite{zhaDistillingRetrievingGeneralizable2024} demonstrated the use of natural language feedback for robotic manipulation tasks. It showed improvements in high level task planning as well as low level control policy.
+
+\section{Simulation Setup}
+
+The simulation environment is called Frozen Lake and comes from the software package Gymnasium\cite{towersGymnasium2024}. An screen shot from the simulation environment is shown in Figure \ref{fig:frozen_lake_overview}. The environment is a 4x4 grid world with consists of navigable tiles, hole tiles and a goal tile. The agent start from tile [0, 0] and tries to reach the goal at tile [3, 3] without falling into a hole.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\columnwidth]{frozen_lake_overview.png}
+    \caption{Frozen Lake Grid World}
+    \label{fig:frozen_lake_overview}
+\end{figure}
+
+\subsubsection{Action Space}
+
+At each iteration, the agent can take one of four actions: move up, move down, move left, and move right. The agent moves in the intended direction only 1/3 of the time. If the agent tries to move left for example, the probability of the actual action is as follows:
+
+\begin{itemize}
+    \item P(move left)=1/3
+    \item P(move up)=1/3
+    \item P(move down)=1/3
+\end{itemize}
+
+\subsubsection{Observation Space}
+
+The agent can observe its current location in the grid world as a single number. It is calculated as \(current\_row \times nrows + current\_col\).
+
+\subsubsection{Rewards}
+
+The agent receives a reward of 1 when it reaches the goal and a reward of 0 otherwise. Either reaching a tile with a hole or the goal tile terminates the episode.
+
+\section{Methodology}
+
+\subsubsection{Basic Q-learning}
+
+A basic Q-learning\cite{watkinsQlearning1992} algorithm is implemented to solve the Frozen Lake problem. The temporal difference update equation is as follows:
+
+\begin{equation}
+    Q(s, a) \leftarrow Q(s, a) + \alpha \left( r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right)
+    \label{eq:q_learning}
+\end{equation}
+Where:
+\begin{conditions}
+    Q(s, a) & The Q-value of state \(s\) and action \(a\) \\
+    \alpha  & The learning rate \\
+    r       & The reward received after taking action \(a\) in state \(s\) \\
+    \gamma  & The discount factor \\
+    s'      & The next state \\
+    a'      & The next action
+\end{conditions}
+
+\subsubsection{Implicit Feedback}
+
+In the implicit feedback setting, at each iteration, the agent solicit human feedback after taking an action with the question: \textit{"Was the agent's action correct? (y/n)"}. If the human answers "y", 1 is added to the reward. Nothing is done otherwise. The agent then updates the Q-value using the environment reward as well as the human feedback rewards. Eq.~\ref{eq:q_learning} then becomes:
+
+\begin{equation}
+    \begin{split}
+        Q(s, a) \leftarrow Q(s, a) + \alpha \left( r + F(s, s') + \gamma \max_{a'} Q(s', a') - Q(s, a) \right)
+        \label{eq:implicit_feedback}
+    \end{split}
+\end{equation}
+Where:
+\begin{conditions}
+    F(s, s') & Human Feedback Reward as a function of \(s\) and \(s'\) \\
+    s        & The current state \\
+    s'       & The next state \\
+\end{conditions}
+
+The human feedback is cached with \(s\) and \(s'\) as keys. This is done to minimize the number of times the human input is required during training.
+
+\subsubsection{Explicit Feedback}
+
+In the explicit feedback setting, the agent solicit human feedback after taking an action with the question: \textit{"What should the agent have done instead?"}. The human 
+
+
+
+
+
+\section{Results}
+
+
+\section{Discussion}
+
+\section{Conclusion}
+
 \bibliographystyle{IEEEtran}
 \bibliography{IEEEabrv,AR.bib}
 
