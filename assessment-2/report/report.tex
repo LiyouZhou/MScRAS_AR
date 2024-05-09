@@ -1,0 +1,259 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{numprint}
+\usepackage[flushleft]{threeparttable}
+\graphicspath{{./figures/}}
+\usepackage{array}
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{Learning from Demonstration Coursework Report}
+
+\author{\IEEEauthorblockN{Liyou Zhou}
+    \IEEEauthorblockA{\textit{Department of Computer Science} \\
+        \textit{University of Lincoln}\\
+        Lincoln, UK \\
+        https://orcid.org/0009-0005-9491-9003}
+}
+
+\maketitle
+
+\begin{abstract}
+    Motor primitives are the basic building blocks of complex movements in biological systems. Dynamic Movement Primitives (DMP) and Stable Estimator of Dynamic Systems (SEDS) are two methods to construct robot control policies from basic building blocks mimicking their biological counterparts. The parameters of the building blocks can be learned from expert demonstrated trajectories. In this report, the application of DMP and SEDS in learning robot control policies from expert demonstrations is studied. The performance of the two methods in imitating example trajectories is evaluated. DMP outperforms SEDS in fitness of the resultant trajectory and training time in the cases tested. However, SEDS can learn from multiple demonstrations, model correlation between dimensions of the state space and are time-independent making it more versatile and applicable to a wider range of tasks.
+\end{abstract}
+
+\begin{IEEEkeywords}
+    Learning from demonstration, Dynamic Movement Primitives, Stable Estimator of Dynamic Systems
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+In the study of biological systems, it has long been understood that complex coordinated movements is achieved by combining a number of much simpler basic units of motion \cite{flashMotorPrimitivesVertebrates2005,mussa-ivaldiModularFeaturesMotor1999}. The innate ability of biological systems to perform complex tasks in smooth, precise and coordinated movements are highly desirable for robotic systems. In pursuit of replicating biological behaviour in robots, learning from demonstration (LfD) \cite{ravichandarRecentAdvancesRobot2020} emerged as a promising field of research.
+
+One approach in LfD seeks to model and learn primitive movements from expert demonstrations, and then generalize these movements to new tasks \cite{maedaLearningInteractionCollaborative2014}. The primitives can be represented with a mathematical model \cite{ijspeertTrajectoryFormationImitation2001} or by a neural network \cite{merelNeuralProbabilisticMotor2019}.
+
+This report will study the application of Dynamic Movement Primitives (DMP) \cite{ijspeertTrajectoryFormationImitation2001} and Stable Estimator of Dynamic Systems (SEDS) \cite{khansari-zadehLearningStableNonlinear2011} as methods to learn robot control policies from expert demonstrations.
+
+\section{Related Work}
+
+\subsection{Automatic Curricula via Expert Demonstrations}
+
+In reinforcement learning, curriculum learning improves the sampling efficiency of complicated RL tasks by introducing a sequence of auxiliary tasks with increasing difficulty. The curriculum can be constructed by hand or automatically derived demonstration. \cite{maedaLearningInteractionCollaborative2014} proposed a method to automatically generate a curriculum of tasks by sampling states from expert demonstrated trajectories.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.45\textwidth]{aced.png}
+    \caption{Example of demonstration trajectory segmentation. Source: \cite{daiAutomaticCurriculaExpert2022}}
+    \label{fig:curriculum}
+\end{figure}
+
+Expert trajectories consist of sequences of states are first collected. Each trajectory is subdivided into $C_{max}$ segments (e.g. Fig.~\ref{fig:curriculum}). At the start of learning, the agent starts from states sampled from the first segment close to the goal state. The agent is trained using reinforcement learning to reach the goal state. As soon as the agent is able to amass a threshold reward value, the curriculum progresses, and the agent is restarted from states sampled from the next segment increasing the difficulty of the task. This process continues until the agent is able to reach the goal state from any state in the initial state distribution.
+
+The method is evaluated on a pick and place task in simulation. It showed a large improvement in pick success rate compared to pure behaviour cloning and even outperformed the expert demonstrations due to its generalization properties. The method is also compared with Montezuma’s Revenge algorithm \cite{salimansLearningMontezumaRevenge2018} where the curriculum is handcrafted. Montezuma’s Revenge algorithm fails to generalize to perturbations in initial state from the demonstrated states due to the lack of randomization in the curriculum. The automatic curriculum method is shown to be more robust and generalizable. It was able to learn a successful policy even with just a few demonstrations.
+
+\subsection{Neural Probabilistic Motor Primitives}
+
+Proposed in \cite{merelNeuralProbabilisticMotor2019}, Neural Probabilistic Motor Primitives (NPMP) is a method to combine a large number of basic motor skills from expert demonstrations into a single control policy using a neural network. The paper demonstrates the method by applying it to a simulated humanoid robot to learn a variety of tasks such as walking, running, cartwheel and backflip with single policy.
+
+A 56 DoF humanoid body is implemented in simulation. Each joint is given an actuation in the range \([-1, 1]\). Motion capture data from the CMU Mocap database\cite{CarnegieMellonUniversity} is used to generate about 3000 clips of expert trajectories embodied in the simulated robot. For each clip, an expert control policy is trained using reinforcement learning by minimizing an energy function. The energy function is defined as the weighted sum of distance between the expert states and the policy states.
+
+Given these 3000 expert policies, an encoder is trained to embed the policy into a latent representation and jointly with a decoder can emit actions from current state input. The network is trained auto-regressively by predicting the next series of actions given the current state. The latent space is also conditioned on the knowledge that temporally nearby trajectory snippets should have a similar representation. The resultant architecture predicts future actions, given past latent spaces conditioned upon a desired future trajectory (Fig.~\ref{fig:npmp}).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.45\textwidth]{npmp.png}
+    \caption{Neural Probabilistic Motor Primitives. Source: \cite{merelNeuralProbabilisticMotor2019}}
+    \label{fig:npmp}
+\end{figure}
+
+Discarding the encoder, a high level policy is then trained to operate directly on the latent space such that the robot can be conditioned to re-call different modes of behaviours during a longer timed-framed task. The high level policy receives a single target state and outputs a latent space state to condition the actuation policy. The high level policy is trained using reinforcement learning with sparse rewards. It is shown to be able to re-call a range of modes such as walking, running, cartwheel and backflip while managing smooth transition between them.
+
+\section{Applications}
+
+\subsection{Dynamic Movement Primitives}
+
+Dynamic Movement Primitives are first formulated in \cite{ijspeertTrajectoryFormationImitation2001} to represent the control policy of a linear dynamic system. It proposed the use of Radial Basis Function (RBF) as a mathematical model to represent the motor primitives. 
+
+In a system with 1 DoF $q$, and the goal is to move from $q_0$ to $g$ in a time $s$ as $s$ increases linearly from 0 to 1, assume the second order derivative of $q$ can be directly controlled (e.g. control motor torque), the system can be model via the following equation:
+
+\begin{equation}
+    \ddot{q} = I(q, \dot{q})  + f(s)
+\end{equation}
+where
+\begin{conditions}
+    q & position \\
+    g & goal position \\
+    I(q,\dot{q}) & \(K(g-q) - D\dot{q}\) (i.e. DP controller) \\
+    \tau & inertia of the system \\
+    f(s) & forcing term \\
+    s & time in the range [0, 1] \\
+\end{conditions}
+
+The forcing term $f(s)$ can then be defined as follows:
+\begin{equation}
+    f(s) = \frac{\sum_{i=1}^{N} w_i \phi_i(s)}{\sum_{i=1}^{N}w_i}s(g-q_0)
+\end{equation}
+where
+\begin{conditions}
+    w_i & weights \\
+    \phi_i(s) & radial basis functions \\
+    N & number of basis functions \\
+    q_0 & initial position
+\end{conditions}
+The radial basis function is typically a Gaussian:
+\begin{equation}
+    \phi_i(s) = \exp(-\frac{s - \mu_i}{2\sigma^2_i})
+\end{equation}
+where
+\begin{conditions}
+    \mu_i & centre of the basis function \\
+    \sigma_i & standard deviation of the basis function
+\end{conditions}
+
+Given a demonstrated trajectory with positions $q_d^1...q_d^T$ and the target joint position $g$. The value of the forcing term can be calculated:
+
+\begin{equation}
+    f_d = \ddot{q_d} - (k_{gain}(g-q) - d_{gain}\dot{q_d})
+\end{equation}
+
+The forcing term need to be tuned to model the demonstrations. This can be done by minimizing the locally weighted quadratic error criterion\cite{schaalScalableTechniquesNonparametric2002} for each RBF:
+
+\begin{equation}
+    J_i = \sum_{t=1}^{T} \phi_i(s)(f_d{s} - w_iq_t(g-q_0))^2
+\end{equation}
+This has analytical solution:
+\begin{equation}
+    w_i = \frac{r^T\Gamma_if_d}{r^T\Gamma_ir}
+\end{equation}
+where
+\begin{conditions}
+    r & \(\begin{bmatrix} q_1(g-q_0) & q_2(g-q_0) & ... & q_T(g-q_0) \end{bmatrix}^T\) \\
+    \Gamma_i & \(\begin{bmatrix} \phi_i(s_1) & 0 & ... & 0 \\ 0 & \phi_i(s_2) & ... & 0 \\ ... & ... & ... & ... \\ 0 & 0 & ... & \phi_i(s_T) \end{bmatrix}\) \\
+    f_d & \(\begin{bmatrix} f_d(1) & f_d(2) & ... & f_d(T) \end{bmatrix}^T\) 
+\end{conditions}
+
+\subsection{Stable Estimator of Dynamic Systems}
+
+Proposed in \cite{khansari-zadehLearningStableNonlinear2011}, SEDS solves dynamic systems similar to DMPs. But the formulation and training method are different. It uses Gaussian Mixture Models to model the distribution of the demonstrated trajectories.
+
+Given a system with state $q$ and a demonstration \([q_d^1, \dot{q}_d^1...q_d^T, \dot{q}_d^T]\) the goal is to learn a mapping from $q$ to $\dot{q}$: $\dot{q} = f(q)$. Since demonstrations can be noisy and inexact, the mapping is modelled probabilistically using Gaussian Mixtures:
+\begin{equation}
+    p(\dot{q}|q) = \sum_{n=1}^N{o_n(q)\mathcal{N}(q|\dot{q};m^n_{q|\dot{q}}, \Sigma^n_{q|\dot{q}})}
+\end{equation}
+where
+\begin{conditions}
+    N & number of Gaussian components \\
+    o_n(q) & \(\frac{\mathcal{N}(q|m^n_q,\Sigma^n_{qq})}{\sum_{n=1}^N{\mathcal{N}(q|m^n_q,\Sigma^n_{qq})}}\) (Mixing Coefficient)\\
+    m^n_{\dot{q}|q} & $m_{\dot{q}} + \Sigma_{\dot{q}q}\Sigma_{qq}^{-1}(q - m_q)$ (Conditional Mean)\\
+    \Sigma^n_{\dot{q}|q} & $\Sigma{\dot{q}\dot{q}} - \Sigma_{\dot{q}q}\Sigma_{qq}^{-1}\Sigma_{q\dot{q}}$ (Conditional Variance)\\
+\end{conditions}
+Then the value of $\dot{q}$ is just the expected value of the distribution:
+\begin{equation}
+    \dot{q} = f(q) = \sum_{n=1}^N{o_n(q)A^nq + B^n}
+\end{equation}
+where
+\begin{conditions}
+    A^n & $\Sigma^n_{\dot{q}q}(\Sigma^n_{qq})^{-1}$ \\
+    B^n & $m^n_{\dot{q}} - A^nm^n_q$
+\end{conditions}
+The mean and covariance matrices of the Gaussian Mixture can be solved through iterative optimization by minimizing the negative log likelihood of the demonstration data:
+
+\begin{equation}
+    \min_{\theta}J(\theta) = -\sum_{n=1}^N\sum_{t=1}^T\log(\mathcal{N}(q^{t,n}, \dot{q}^{t,n}))
+\end{equation}
+
+Few basic constrains about Gaussian apply:
+\begin{align}
+\begin{split}
+    \Sigma_k \succ 0,\ 0 < o_k \geq 0,\ \sum_{k=1}^N o_k = 1
+\end{split}
+\end{align}
+
+Applying Lyapunov constrains to ensure stability of the system using a quadratic Lyapunov function $V(q) = \frac{1}{2}q^Tq$, the following constrains also apply:
+\begin{align}
+    \begin{split}
+        b_k=-A_kq^*,\ A_k + A_k^T \prec 0
+    \end{split}
+\end{align}
+
+The system can now be solved by a standard constrained optimization algorithm.
+
+\section{Evaluation}
+
+Using software package pymps \cite{dewolfStudywolfPydmps2024} and example code from workshop, DMPs is applied to imitate a number of example trajectories. The results are shown in Fig~\ref{fig:dmp}. Similarly, SEDS is applied to the example trajectories, the resultant trajectories are shown in Fig~\ref{fig:seds}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{dmp_imitation.png}
+    \caption{DMP applied to imitate example trajectories. n is the number of basis function used to model the trajectory}
+    \label{fig:dmp}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{seds_imitation.png}
+    \caption{SEDS applied to imitate example trajectories. n is the number of Gaussian components used in the Gaussian mixture.}
+    \label{fig:seds}
+\end{figure}
+
+Dynamic Time Warped Distance \cite{salvadorAccurateDynamicTime2007c} (DTWD) is used to measure the similarity between the demonstrated trajectory and the trajectory produced by the trained model. This metric bridges the gap in time resolution in producing DMP and SEDS trajectories. Making the 2 methods directly comparable. However, this does ignore any difference in speed or acceleration of the trajectory and compare purely the overall shape making it unsuitable in situations where imitating derivatives are important. The results are shown in Fig~\ref{fig:dtw}. The time taken to train the models are shown in Fig~\ref{fig:dtw_dt}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{dmp_seds_distances_comparison.png}
+    \caption{Dynamic Time Warped Distance score for DMP (left) and SEDS (right)}
+    \label{fig:dtw}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.49\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{dmp_imitation_dt.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{seds_training_time.png}
+    \end{subfigure}
+    \caption{Training times for DMP (left) and SEDS (right)}
+    \label{fig:dtw_dt}
+\end{figure}
+
+\section{Discussion}
+
+In DMPs the number of basis function positively correlate with the fitness of the resultant trajectory. However, the improvement diminish with increasing number of basis functions. In the example trajectories, only minor improvement can be made by going beyond 100 basis functions. Due to the fact that DMPs have exact solutions, the performance of the model is highly predictable.
+
+In SEDS, increasing the number of Gaussian components does not necessarily improve the fitness. This is due to a number of factors. Because SEDS's reliance on optimization algorithms, global optimal solution is not guaranteed. Increasing the number of Gaussian components increases the search space exponentially. This makes the optimization problem drastically harder to solve. Depending on the shape of the trajectory, the best number of Gaussian components can vary. The line shape, for example, would benefit from small number of Gaussians due to its simplicity. More Gaussian component could introduce undesirable artefacts.
+
+In comparing the fitness of trajectories for DMP and SEDS using DTWD (Fig.~\ref{fig:dtw}), DMPs outperform SEDS in all the scenarios tested. SEDS are also much slower to train due to the use of a stochastic optimization algorithm. The training time of SEDS scale approximately with the number of Gaussians but vary significantly due to its iterative and stochastic nature. DMPs are deterministic and have exact solutions. Hence, its training time scales linearly with the number of basis functions.
+
+Despite the performance and speed differences, SEDS has a number of advantages over DMPs:
+\begin{enumerate}
+    \item SEDS is able to learn from multiple demonstrations. It extracts a probabilistic trend among a group of noisy demonstrations. This makes SEDS more robust to noise and perturbations. DMP can only learn motions from one demonstration and cannot distinguish between noise and signal.
+    \item SEDS models are time-independent, it deals with dilations and contractions in the temporal dimension automatically while DMPs require external control of the time variable.
+    \item SEDS can model correlation between dimension of the state space via the covariance matrix. DMPs, on the other hand, can only deal with each dimension independently.
+\end{enumerate}
+
+\section{Conclusion}
+
+DMP and SDES are both effective methods to learning robot control policies from expert demonstrations. In our experiments, DMPs and SEDS are trained on a single demonstration to follow a number of simple trajectories. DMPs achieved better fitness of the final trajectory with the demonstration in all cases while being much faster to train. This is due to DMPs being deterministic and have exact solutions. However, they are constrained to learning from a single demonstration. SEDS, on the other hand, can learn a probabilistic model from multiple demonstrations. They are more robust to noise and perturbations. SEDS are also time-independent and can model correlation between dimensions of the state space. This makes SEDS more versatile and applicable to a wider range of tasks.
+
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,lfd.bib}
+
+\end{document}

@@ -1,0 +1,11 @@
+\subsection{Bootstrapping of Parameterized Skills}
+
+Consider a control policy $\pi_\theta$ parameterized by $\theta$ and a task parameterized by $\tau$. The paper introduces the concept of parameterized skill $\Theta $ which maps $\tau$ to $\theta$. The skill can be learned by maximizing the expected reward of the task over the distribution of $\tau$.
+
+For each new task $\tau$, $\pi_\theta$ is initialized with parameter $\theta_init = \Theta(\tau)$. $\pi_\theta$ is then optimized via a reinforcement learning algorithm for task $\tau$ to obtain the optimal policy parameter $\theta^*$. Now the parameter pair $(\tau, \theta)$ joins a pool of labelled data to train $\Theta$ in a supervised manner.
+
+Training $\Theta$ incrementally on a range of tasks causes it to produce better and better $\theta_init$ reducing the number of iterations required for reinforcement learning to converge. Eventually $\theta^* = \theta_init = \Theta(\tau)$.
+
+The trained parameterized skill $\Theta$ is robust to perturbations in $\tau$ and can zero-shot adapt to new unseen tasks. The paper demonstrates the method on a humanoid robot in simulation. The task setup is the robot need to reach through a grid mesh obstacle to reach a target plan.
+
+3 DMPs with 5 basis functions are used as the parameterized policy. $\theta$ is the parameters of the basis functions.

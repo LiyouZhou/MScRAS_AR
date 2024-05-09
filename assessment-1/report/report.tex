@@ -40,27 +40,27 @@ Human feedback has been shown to improve the learning outcomes of Reinforcement 
 
 \section{Introduction}
 
-When interacting with the real world, robots usually follow a observation-decision-action cycle. They observe the environment, make decisions based on the observations, and then act on the environment. The state of the robot and the environment depends on all the previous actions of the robot, and any action taken will affect the probability distribution of future states. This class of problem is known as Sequential Decision Problems (SDPs). Markov Decision Processes (MDPs) \cite{putermanMarkovDecisionProcesses2014} are often used to describe such problems. MPDs assumes fully accurate observations of the environment but actions have non-deterministic outcomes.
+When interacting with the real world, robots usually follow a observation-decision-action cycle. The state of the robot and the environment depends on all the previous actions of the robot, and any action taken will affect the probability distribution of future states. This class of problem is known as Sequential Decision Problems (SDPs). Markov Decision Processes (MDPs) \cite{putermanMarkovDecisionProcesses2014} are often used to describe such problems. MPDs assumes fully accurate observations of the environment but actions have non-deterministic outcomes.
 
-Reinforcement Learning (RL) is a subfield of machine learning that deals with sequential decision problems. An learning agent is usually made to interact with an environment in order to an optimal control policy. The agent receives rewards from the environment as feedback for its actions. The goal of the agent is to maximize the cumulative reward over time.
+Reinforcement Learning (RL) is a machine learning approach dealing with sequential decision problems. An learning agent is usually made to interact with an environment in order to learn an optimal control policy. The agent receives rewards from the environment as feedback for its actions. The goal of the agent is to obtain the policy that maximize the cumulative reward over time.
 
 Robot navigation problems is a typical example of SDPs and are often modelled using MDPs. It has been demonstrated that RL algorithms solves navigation problems effectively \cite{zhuDeepReinforcementLearning2021}. There is usually a reward associated with reaching the navigation goal. An RL algorithm can autonomously explore the state/action space of the environment and learn an optimal policy to reach the goal.
 
-A main weakness of such approaches is that the reward is sparse. Only the goal state has a non-zero reward. At the beginning of learning, the agent spend a lot of time wondering aimlessly in the environment without receiving any reward. A human processes domain knowledge about the environment such as where the goal is and where the obstacles to avoid. By interacting with a human teacher in the learning process, the human can use some of the domain knowledge to guide the learning of the agent to speed up the learning process.
+A main weakness of such approaches is that the reward is sparse. Only the goal state has a non-zero reward. At the beginning of learning, the agent spend a lot of time wandering aimlessly in the environment without receiving any reward. A human possesses domain knowledge about the environment such as general direction of the goal and location of the obstacles. By interacting with a human teacher in the learning process, the human can impart some of the domain knowledge to guide the learning of the agent and speed up the training process.
 
-In this report, we use a simple grid world with a single goal state to explore the effect of human guidance in the Reinforcement Learning process. We compare the performance of the agent with and without human guidance as well as different granularity of feedback.
+In this report, we use a simple grid world with a single goal state to explore the effect of human guidance in Reinforcement Learning Algorithms. The performance of the agent with and without human feedback are compared. Two different granularity levels of feedback are tested as well.
 
 \section{Related Work}
 
 Corrective feedback is understood to be an important part of learning. \cite{ellisIMPLICITEXPLICITCORRECTIVE2006} examined the effect of corrective feedback on language learning. It tested 2 types of feedback, implicit and explicit. Implicit feedback provide only a good/bad response to error. Explicit feedback, on the other hand, provide detailed explanation relating to the error itself. The study found that explicit feedback showed a clear advantage over implicit feedback.
 
-Human feedback has been widely used in Reinforcement Learning \cite{liHumanCenteredReinforcementLearning2019} to improve learning outcomes. \cite{iidaGeneratingPersonalityCharacter1998} showed that by tweaking reward according to human feedback, a Q learning algorithm is able to generate personalized control policy for a robotic face. \cite{tenorio-gonzalezDynamicRewardShaping2010} showed that even inconstant feedback improves learning outcomes.
+Human feedback has been widely used in Reinforcement Learning \cite{liHumanCenteredReinforcementLearning2019} to improve learning outcomes. \cite{iidaGeneratingPersonalityCharacter1998} showed that by tweaking reward according to human feedback, a Q learning algorithm is able to generate personalized control policy for a robotic face. \cite{tenorio-gonzalezDynamicRewardShaping2010} showed that even inconsistent feedback improves learning outcomes.
 
-Human feedback is equally applicable in deep reinforcement learning tasks where the state and observation space is large and complex. \cite{j.wuHumanGuidedReinforcementLearning2023} shows that human interventions in an autonomous vehicle can serve as a reward shaping mechanism to improve the performance of the agent. \cite{zhaDistillingRetrievingGeneralizable2024} demonstrated the use of natural language feedback for robotic manipulation tasks. It showed improvements in high level task planning as well as low level control policy.
+Human feedback is equally applicable in Deep Reinforcement Learning tasks where the state and observation space is large and complex. \cite{j.wuHumanGuidedReinforcementLearning2023} shows that human interventions in an autonomous vehicle can serve as a reward shaping mechanism to improve the performance of the agent. \cite{zhaDistillingRetrievingGeneralizable2024} demonstrated the use of natural language feedback for robotic manipulation tasks. It showed improvements in high level task planning as well as low level control policy.
 
 \section{Simulation Setup}
 
-The simulation environment is called Frozen Lake and comes from the software package Gymnasium\cite{towersGymnasium2024}. It emulates a robot navigation problem in a grid world. An screen shot from the environment is shown in Figure \ref{fig:frozen_lake_overview}. The environment is a 4x4 grid world with consists of navigable tiles, hole tiles and a goal tile. The agent start from tile [0, 0] and tries to reach the goal at tile [3, 3] without falling into a hole.
+The simulation environment is called Frozen Lake and comes from the software package Gymnasium\cite{towersGymnasium2024}. It emulates a robot navigation problem in a grid world. A screenshot from the environment is shown in Fig~\ref{fig:frozen_lake_overview}. The environment is a 4x4 grid world consisting of navigable tiles, hole tiles and a goal tile. The agent start from tile [0, 0] and tries to reach the goal at tile [3, 3] without falling into a hole.
 
 \begin{figure}
     \centering
@@ -83,7 +83,7 @@ The agent receives a reward of 1 when it reaches the goal and a reward of 0 othe
 
 \section{Methodology}
 
-\subsubsection{Basic Q-learning}
+\subsection{Basic Q-learning}
 
 A basic Q-learning\cite{watkinsQlearning1992} algorithm is implemented to solve the Frozen Lake problem. The temporal difference update equation is as follows:
 
@@ -101,7 +101,7 @@ Where:
     a'      & The next action
 \end{conditions}
 
-\subsubsection{Implicit Feedback}
+\subsection{Implicit Feedback}
 
 In the implicit feedback setting, at each iteration, the agent solicit human feedback after taking an action with the question: \textit{"Was the agent's action correct? (y/n)"}. If the human answers "y", 1 is added to the reward. Nothing is done otherwise. The agent then updates the Q-value using the environment reward as well as the human feedback rewards. Eq.~\ref{eq:q_learning} then becomes:
 
@@ -119,7 +119,7 @@ Where:
 
 The human feedback is cached with \(s\) and \(s'\) as keys. This is done to minimize the number of times the human input is required during training.
 
-\subsubsection{Explicit Feedback}
+\subsection{Explicit Feedback}
 
 In the explicit feedback setting, the agent solicit human feedback after taking an action with the question: \textit{"What should the agent have done instead?"}. In this instance the human provides the optimal action \(a^*\) for state \(s\). For every iterations, the agent is then able to perform 2 Q value updates. Once following Eq.~\ref{eq:implicit_feedback} with a human feedback reward of 1 if the action taken \(a\) is the same as the optimal action \(a^*\). The second update is simpler:
 
@@ -132,7 +132,7 @@ This serves to push up the Q value of the optimal action \(a^*\) in state \(s\) 
 
 \section{Results}
 
-Experiments were run with Q learning algorithm on the Frozen Lake environment. The learning rate \(\alpha\) was set to 0.01 and the discount factor \(\gamma\) was set to 0.95. The number of episodes was set to 2000. 3 variation of the algorithm is tested: Q-learning without feedback, Q-learning with implicit human feedback, and Q-learning with explicit human feedback. Once the agents have converged, the optimal policy is extracted and shown in Figure \ref{fig:optimal_policy}. The learning curve is shown in Figure \ref{fig:learning_curve_steps}.
+Experiments were run with Q learning algorithm on the Frozen Lake environment. The learning rate \(\alpha\) was set to 0.01 and the discount factor \(\gamma\) was set to 0.95. 2000 training episodes was performed for each experiment. 3 variation of the algorithm is tested: Q-learning without feedback, Q-learning with implicit human feedback, and Q-learning with explicit human feedback. Once the agents have converged, the optimal policy is extracted and shown in Figure \ref{fig:optimal_policy}. The learning curve is shown in Figure \ref{fig:learning_curve_steps}. The episode lengths are shown in Figure \ref{fig:episode_length}. The training error is shown in Figure \ref{fig:training_error}. The training error is defined as the temporal difference term in Eq.~\ref{eq:q_learning}.
 
 \begin{figure}
     \centering
@@ -143,19 +143,45 @@ Experiments were run with Q learning algorithm on the Frozen Lake environment. T
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\columnwidth]{learning_curve_steps.png}
+    \includegraphics[width=\columnwidth]{learning_curve_steps.png}
     \caption{Learning Curve of Q-learning on the Frozen Lake environment without feedback compared to Implicit and Explicit Feedback. Mean reward is calculated as a rolling average of 100 episodes.}
     \label{fig:learning_curve_steps}
 \end{figure}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{episode_length.png}
+    \caption{Episode Lengths of Q-learning on the Frozen Lake environment without feedback compared to Implicit and Explicit Feedback. Episode length is calculated as a rolling average of 100 episodes.}
+    \label{fig:episode_length}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{training_error.png}
+    \caption{Training Error of Q-learning on the Frozen Lake environment without feedback compared to Implicit and Explicit Feedback. Training Error is defined as the temporal difference term in Eq.~\ref{eq:q_learning}.}
+    \label{fig:training_error}
+\end{figure}
+
 \section{Discussions}
 
-The 3 learning strategies converged to slightly different final policies. Since the execution of the agent is deterministic, the policies are equally optimal. In any of the policies, starting from any of the tiles, the agent would have arrived at the goal. Although sometime taking more steps than necessary. This is because no extra reward was given for shorter routes during training. The only objective as to arrive at the goal without falling into a hole. The human feedback could have played a hand in nudging the agent towards a particular policy.
+\subsection{Optimal Policy}
 
-The learning curves shows a clear advantage for the addition of human feedback, especially in the early stages of learning. The agent without feedback took a long time wondering around the environment without receiving any reward. This means there is no learning signal to improve the policy. Hence this initial time is wasted. In the case of human feedback, the agent is given extra reward to guide it towards the goal. The agent was able to quickly pick up goal reward and start improving the policy. Both the explicit and implicit feedback experiments converged in fewer steps than the agent without feedback.
+The 3 learning strategies converged to slightly different final policies (Fig.\ref{fig:optimal_policy}). Since the execution of the agent is deterministic, the policies are equally optimal. In any of the policies, starting from any of the tiles, the agent would have arrived at the goal. Although sometime taking more steps than necessary. This is because no extra reward was given for shorter routes during training. The only objective as to arrive at the goal without falling into a hole. The human feedback could have played a hand in nudging the agent towards a particular policy.
+
+\subsection{Feedback vs No Feedback}
+
+The learning curves (Fig.~\ref{fig:learning_curve_steps}) shows a clear advantage for the addition of human feedback, especially in the early stages of learning.Both the explicit and implicit feedback experiments converged in fewer steps than the agent without feedback.
+
+The agent without feedback showed high episode length at the beginning compared to the other 2 strategies (Fig.\ref{fig:episode_length}). Yet Fig.\ref{fig:training_error} show that it fails to pick up any learning signal to improve the policy during that time. Hence this initial time is wasted. In the case of human feedback, the agent is given extra reward to guide it towards the goal. The learning signal (i.e. training error) is already strong even at the beginning. The agent was able to quickly pick up goal reward and start improving the policy without wasting training steps.
+
+\subsection{Implicit vs Explicit Feedback}
 
 Comparing the learning curve for explicit and implicit feedback, the explicit feedback showed a clear advantage in the early stages of learning. This fits the expectation as explicit feedback contains more information. The explicit feedback algorithm leverages this extra information and performs an additional Q value update on top of what the implicit feedback algorithm does.
-However this early advantage tapered off and the 2 strategies converged in similar number of steps. This could be that the extra reward update is not scaled appropriately and the algorithm suffered reward shaping problem. The update in Eq.~\ref{eq:explicit_feedback} could have pushed the Q value too high above equilibrium, needing extra steps to scale it down.
+However this early advantage tapered off and the 2 strategies converged in similar number of steps.
+
+It can be noted that the training error for explicit feedback case converged at a non-zero steady state value (Fig.~\ref{fig:training_error}). This is due to the extra reward update in Eq.~\ref{eq:explicit_feedback} acting against the temporal different update in Eq.~\ref{eq:q_learning}. This could have hindered convergence in later stages of learning. A possible mitigation strategy could be to gradually phase out the second update as learning progresses.
+
+\subsection{Time Efficiency}
 
 Even though the human feedback sped up learning in compute time (number of steps to converge), they are actually much slower in wall clock time. The request for human feedback is several orders of magnitude slower than the agent's autonomous exploration. In the experiments, the strategy without feedback would learn in under half a minute while human feedback strategies will take around 3 minutes. Human feedback is only worthwhile in particular cases where the agent is unable to explore the environment effectively or where interaction with the environment is expensive.
 
