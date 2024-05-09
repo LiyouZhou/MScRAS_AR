@@ -12,6 +12,7 @@
 \usepackage{numprint}
 \usepackage[flushleft]{threeparttable}
 \graphicspath{{./figures/}}
+\usepackage{hyperref}
 \usepackage{array}
 \newenvironment{conditions}
   {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
@@ -31,7 +32,7 @@
 \maketitle
 
 \begin{abstract}
-Human feedback has been shown to improve the learning outcomes of Reinforcement Learning algorithms. In this report, the effect of human feedback on a simple grid world navigation problem is explored. A basic Q-learning algorithm is implemented and augmented with implicit or explicit human feedback. The results show that human feedback reduces the number of steps required for the agent to learn an optimal policy. The explicit feedback strategy showed an advantage in the early stages of learning over the implicit case but both converged in similar number of steps. The human feedback strategies are much slower in wall clock time compared to the strategy without feedback. Explicit feedback is richer in information but is more cognitively taxing for the human teacher. It is slower per feedback request but requires fewer requests overall.
+Human feedback has been shown to improve the learning outcomes of Reinforcement Learning algorithms. In this report, the effect of human feedback on a simple grid world navigation problem is explored. A basic Q-learning algorithm is implemented and augmented with implicit or explicit human feedback. The results show that human feedback reduces the number of steps required for the agent to learn an optimal policy. The explicit feedback strategy showed an advantage in the early stages of learning over the implicit case, but both converged in similar number of steps. The human feedback strategies are much slower in wall clock time compared to the strategy without feedback. Explicit feedback is richer in information but is more cognitively taxing for the human teacher. It is slower per feedback request but requires fewer requests overall.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -40,13 +41,13 @@ Human feedback has been shown to improve the learning outcomes of Reinforcement 
 
 \section{Introduction}
 
-When interacting with the real world, robots usually follow a observation-decision-action cycle. The state of the robot and the environment depends on all the previous actions of the robot, and any action taken will affect the probability distribution of future states. This class of problem is known as Sequential Decision Problems (SDPs). Markov Decision Processes (MDPs) \cite{putermanMarkovDecisionProcesses2014} are often used to describe such problems. MPDs assumes fully accurate observations of the environment but actions have non-deterministic outcomes.
+When interacting with the real world, robots usually follow an observation-decision-action cycle. The state of the robot and the environment depends on all the previous actions of the robot, and any action taken will affect the probability distribution of future states. This class of problem is known as Sequential Decision Problems (SDPs). Markov Decision Processes (MDPs) \cite{putermanMarkovDecisionProcesses2014} are often used to describe such problems. MPDs assumes fully accurate observations of the environment, but actions have non-deterministic outcomes.
 
 Reinforcement Learning (RL) is a machine learning approach dealing with sequential decision problems. An learning agent is usually made to interact with an environment in order to learn an optimal control policy. The agent receives rewards from the environment as feedback for its actions. The goal of the agent is to obtain the policy that maximize the cumulative reward over time.
 
 Robot navigation problems is a typical example of SDPs and are often modelled using MDPs. It has been demonstrated that RL algorithms solves navigation problems effectively \cite{zhuDeepReinforcementLearning2021}. There is usually a reward associated with reaching the navigation goal. An RL algorithm can autonomously explore the state/action space of the environment and learn an optimal policy to reach the goal.
 
-A main weakness of such approaches is that the reward is sparse. Only the goal state has a non-zero reward. At the beginning of learning, the agent spend a lot of time wandering aimlessly in the environment without receiving any reward. A human possesses domain knowledge about the environment such as general direction of the goal and location of the obstacles. By interacting with a human teacher in the learning process, the human can impart some of the domain knowledge to guide the learning of the agent and speed up the training process.
+A main weakness of such approaches is that the reward is sparse. Only the goal state has a non-zero reward. At the beginning of learning, the agent spend a lot of time wandering aimlessly in the environment without receiving any reward. A human possesses domain knowledge about the environment such as general direction of the goal and location of the obstacles. By interacting with a human teacher in the learning process, the human can impart some domain knowledge to guide the learning of the agent and speed up the training process.
 
 In this report, we use a simple grid world with a single goal state to explore the effect of human guidance in Reinforcement Learning Algorithms. The performance of the agent with and without human feedback are compared. Two different granularity levels of feedback are tested as well.
 
@@ -166,18 +167,18 @@ Experiments were run with Q learning algorithm on the Frozen Lake environment. T
 
 \subsection{Optimal Policy}
 
-The 3 learning strategies converged to slightly different final policies (Fig.\ref{fig:optimal_policy}). Since the execution of the agent is deterministic, the policies are equally optimal. In any of the policies, starting from any of the tiles, the agent would have arrived at the goal. Although sometime taking more steps than necessary. This is because no extra reward was given for shorter routes during training. The only objective as to arrive at the goal without falling into a hole. The human feedback could have played a hand in nudging the agent towards a particular policy.
+The 3 learning strategies converged to slightly different final policies (Fig.~\ref{fig:optimal_policy}). Since the execution of the agent is deterministic, the policies are equally optimal. In any of the policies, starting from any of the tiles, the agent would have arrived at the goal. Although sometime taking more steps than necessary. This is because no extra reward was given for shorter routes during training. The only objective as to arrive at the goal without falling into a hole. The human feedback could have played a hand in nudging the agent towards a particular policy.
 
 \subsection{Feedback vs No Feedback}
 
-The learning curves (Fig.~\ref{fig:learning_curve_steps}) shows a clear advantage for the addition of human feedback, especially in the early stages of learning.Both the explicit and implicit feedback experiments converged in fewer steps than the agent without feedback.
+The learning curves (Fig.~\ref{fig:learning_curve_steps}) shows a clear advantage for the addition of human feedback, especially in the early stages of learning. Both the explicit and implicit feedback experiments converged in fewer steps than the agent without feedback.
 
-The agent without feedback showed high episode length at the beginning compared to the other 2 strategies (Fig.\ref{fig:episode_length}). Yet Fig.\ref{fig:training_error} show that it fails to pick up any learning signal to improve the policy during that time. Hence this initial time is wasted. In the case of human feedback, the agent is given extra reward to guide it towards the goal. The learning signal (i.e. training error) is already strong even at the beginning. The agent was able to quickly pick up goal reward and start improving the policy without wasting training steps.
+The agent without feedback showed high episode length at the beginning compared to the other 2 strategies (Fig.~\ref{fig:episode_length}). Yet Fig.~\ref{fig:training_error} show that it fails to pick up any learning signal to improve the policy during that time. Hence, this initial time is wasted. In the case of human feedback, the agent is given extra reward to guide it towards the goal. The learning signal (i.e. training error) is already strong even at the beginning. The agent was able to quickly pick up goal reward and start improving the policy without wasting training steps.
 
 \subsection{Implicit vs Explicit Feedback}
 
 Comparing the learning curve for explicit and implicit feedback, the explicit feedback showed a clear advantage in the early stages of learning. This fits the expectation as explicit feedback contains more information. The explicit feedback algorithm leverages this extra information and performs an additional Q value update on top of what the implicit feedback algorithm does.
-However this early advantage tapered off and the 2 strategies converged in similar number of steps.
+However, this early advantage tapered off, and the 2 strategies converged in similar number of steps.
 
 It can be noted that the training error for explicit feedback case converged at a non-zero steady state value (Fig.~\ref{fig:training_error}). This is due to the extra reward update in Eq.~\ref{eq:explicit_feedback} acting against the temporal different update in Eq.~\ref{eq:q_learning}. This could have hindered convergence in later stages of learning. A possible mitigation strategy could be to gradually phase out the second update as learning progresses.
 
@@ -187,7 +188,7 @@ Even though the human feedback sped up learning in compute time (number of steps
 
 The number of human feedback request is minimized through caching of response. In the implicit case, human feedback is given for every state/action pair which means there is at most \(16 \times 4 = 64\) requests. In the explicit case, human feedback is given for every state which means there is at most 16 requests. However, it was noted that explicit feedback is more cognitively taxing, and takes longer to respond to for the human teacher.
 
-\cite{wiewioraPotentialBasedShapingQValue2003} demonstrated that consistent reward feedback signal during learning is equivalent to initializing the Q values with human provided values in terms of the learning outcome. However, initializing Q values before training is much quicker and less error prone than interactively providing feedback. This is especially true in the case of explicit feedback where the human teacher has to provide the optimal action for every state.
+\cite{wiewioraPotentialBasedShapingQValue2003} demonstrated that consistent reward feedback signal during learning is equivalent to initializing the Q values with human provided values in terms of the learning outcome. However, initializing Q values before training is much quicker and less error-prone than interactively providing feedback. This is especially true in the case of explicit feedback where the human teacher has to provide the optimal action for every state.
 
 \section{Conclusion}
 
